@@ -55,22 +55,22 @@ h1, h2, p { margin: 0; }
 a { color: inherit; }
 button { font: inherit; color: inherit; }
 
-/* ---------- poster wall ---------- */
-.wall {
-  position: fixed; inset: 0; z-index: 0; display: flex; gap: 0; overflow: hidden;
-  background: #b020f0;
+/* ---------- poster wall ----------
+   The stage keeps the wall image's proportions and "covers" the screen, so the
+   poster grid never reflows, it only crops. */
+.wall { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #b020f0; }
+.wall-stage {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: max(100vw, calc(100dvh * 1615 / 1134)); aspect-ratio: 1615 / 1134;
+  background: url("../assets/wall/wall.jpg") center / 100% 100% no-repeat;
 }
-.wall-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
 .poster {
-  position: relative; display: block; width: 100%; padding: 0; border: 0; cursor: zoom-in;
-  background: none; line-height: 0; overflow: hidden;
+  position: absolute; display: block; padding: 0; border: 0; cursor: zoom-in; background: none; overflow: hidden;
 }
-.poster img { width: 100%; height: auto; display: block; }
-.poster .full {
-  position: absolute; inset: 0; height: 100%; object-fit: cover; opacity: 0;
-  transition: opacity .25s ease;
+.poster .reveal {
+  position: absolute; max-width: none; opacity: 0; transition: opacity .25s ease; pointer-events: none;
 }
-.poster:hover .full, .poster:focus-visible .full { opacity: 1; }
+.poster:hover .reveal, .poster:focus-visible .reveal { opacity: 1; }
 .poster:focus-visible { outline: 3px solid #fff; outline-offset: -3px; z-index: 2; }
 
 /* ---------- stage ---------- */

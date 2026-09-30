@@ -122,7 +122,6 @@
       c.classList.toggle("collapsed", collapsed);
     });
     document.querySelectorAll(".card").forEach((c) => { c.draggable = !mobileQuery.matches; });
-    buildWall();
   });
 
   /* ---------- owner mode ---------- */
@@ -195,30 +194,26 @@
   }
   modal.addEventListener("click", (e) => { if (e.target === modal || e.target.closest("[data-close]")) modal.close(); });
 
-  let wallCols = 0;
+  /* The wall is one tinted image with an invisible button over each poster.
+     Hovering a poster reveals its original colours from the matching crop. */
   function buildWall() {
-    const n = mobileQuery.matches ? 3 : 7;
-    if (n === wallCols) return;
-    wallCols = n;
-    const wall = $("#wall");
-    wall.replaceChildren();
-    const per = 6, count = POSTERS.length;
-    for (let c = 0; c < n; c++) {
-      const col = el("div", "wall-col");
-      col.style.marginTop = `${-((c * 53) % 150)}px`;
-      for (let j = 0; j < per; j++) {
-        const p = POSTERS[(c * 2 + j * 3) % count];
-        const btn = el("button", "poster");
-        btn.type = "button";
-        btn.setAttribute("aria-label", `View poster: ${p.title}`);
-        const neon = el("img"); neon.src = `assets/posters/neon/${p.id}.jpg`; neon.alt = ""; neon.draggable = false;
-        const full = el("img", "full"); full.src = `assets/posters/full/${p.id}.jpg`; full.alt = ""; full.loading = "lazy"; full.draggable = false;
-        btn.append(neon, full);
-        btn.addEventListener("click", () => openPoster(p));
-        col.append(btn);
-      }
-      wall.append(col);
+    const { width: W, height: H, slots } = window.WALL;
+    const byId = Object.fromEntries(POSTERS.map((p) => [p.id, p]));
+    const stage = el("div", "wall-stage");
+    for (const [id, x, y, w, h] of slots) {
+      const p = byId[id];
+      const btn = el("button", "poster");
+      btn.type = "button";
+      btn.setAttribute("aria-label", `View poster: ${p.title}`);
+      Object.assign(btn.style, { left: `${x / W * 100}%`, top: `${y / H * 100}%`, width: `${w / W * 100}%`, height: `${h / H * 100}%` });
+      const rev = el("img", "reveal");
+      rev.src = "assets/wall/wall-color.jpg"; rev.alt = ""; rev.draggable = false; rev.loading = "lazy";
+      Object.assign(rev.style, { width: `${W / w * 100}%`, height: `${H / h * 100}%`, left: `${-x / w * 100}%`, top: `${-y / h * 100}%` });
+      btn.append(rev);
+      btn.addEventListener("click", () => openPoster(p));
+      stage.append(btn);
     }
+    $("#wall").replaceChildren(stage);
   }
 
   renderBoard();
