@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For Anish</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
+<style>
+  :root{
+    --ink:#2b2b2b;
+    --ink-soft:#8a8a8a;
+    --white:#ffffff;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:var(--white);
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    font-family:'Cormorant Garamond', Georgia, serif;
+  }
+  main{
+    width:100%;
+    padding:6vh 6vw;
+  }
+  .carousel{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    gap:clamp(20px, 4vw, 44px);
+    overflow-x:auto;
+    scroll-snap-type:x proximity;
+    padding:2vh 2px 1vh;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .carousel::-webkit-scrollbar{ display:none; }
+  .entry{
+    flex:none;
+    scroll-snap-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+    color:inherit;
+  }
+  .entry img{
+    width:clamp(96px, 16vw, 168px);
+    height:clamp(96px, 16vw, 168px);
+    object-fit:cover;
+    display:block;
+    border-radius:2px;
+    box-shadow:0 1px 2px rgba(0,0,0,.06);
+    transition:transform .35s cubic-bezier(.2,.8,.3,1), box-shadow .35s ease;
+  }
+  .entry:hover img, .entry:focus-visible img{
+    transform:translateY(-3px) scale(1.03);
+    box-shadow:0 10px 24px rgba(0,0,0,.12);
+  }
+  .entry:focus-visible{ outline:2px solid var(--ink-soft); outline-offset:6px; border-radius:4px; }
+  .entry .date{
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(14px, 1.6vw, 17px);
+    letter-spacing:.02em;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  @media (prefers-color-scheme: dark){
+    body{ background:var(--white); color:var(--ink); }
+  }
+</style>
+</head>
+<body>
+  <main>
+    <div class="carousel" id="carousel"></div>
+  </main>
+
+  <script>
+    var ENTRIES = [
+      {
+        date: "September 12, 2026",
+        img: "assets/two-windows-thumb.jpg",
+        href: "https://padmah3.github.io/happy-birthday-2026/site/two-windows.html",
+        alt: "Two Windows"
+      }
+      // Add future entries here: { date, img, href, alt }
+    ];
+
+    var carousel = document.getElementById('carousel');
+    ENTRIES.forEach(function(e){
+      var a = document.createElement('a');
+      a.className = 'entry';
+      a.href = e.href;
+      var img = document.createElement('img');
+      img.src = e.img;
+      img.alt = e.alt || '';
+      var date = document.createElement('div');
+      date.className = 'date';
+      date.textContent = e.date;
+      a.appendChild(img);
+      a.appendChild(date);
+      carousel.appendChild(a);
+    });
+  </script>
+</body>
+</html>
