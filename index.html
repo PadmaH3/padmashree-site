@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Padma Playground</title>
+  <meta name="description" content="A kanban board to keep track of personal projects.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍊</text></svg>">
+  <link rel="preload" href="assets/fonts/sf-pro-text-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- poster wall: built by js/app.js -->
+  <div class="wall" id="wall" aria-label="Poster wall. Click a poster to see it larger."></div>
+
+  <main class="stage">
+    <a class="pill-link pill-tools" id="link-tools" target="_blank" rel="noopener"></a>
+
+    <section class="shell" id="board">
+      <header class="shell-head">
+        <h1 id="board-title"></h1>
+        <p id="board-subtitle"></p>
+      </header>
+      <div class="panel"><div class="columns" id="columns"></div></div>
+    </section>
+
+    <section class="blog-shell" id="blog"></section>
+
+    <a class="pill-link pill-twitter" id="link-twitter" target="_blank" rel="noopener"></a>
+  </main>
+
+  <dialog class="modal poster-modal" id="poster-modal">
+    <button class="modal-close" data-close aria-label="Close">✕</button>
+    <img id="poster-img" alt="">
+    <div class="poster-meta">
+      <h2 id="poster-title"></h2>
+      <p id="poster-artist"></p>
+    </div>
+  </dialog>
+
+  <dialog class="modal gate-modal" id="gate-modal">
+    <div class="gate-lock">🔒</div>
+    <h2 id="gate-title"></h2>
+    <p id="gate-intro"></p>
+    <p class="gate-q" id="gate-q"></p>
+    <div class="gate-options" id="gate-options"></div>
+    <p class="gate-verdict" id="gate-verdict" hidden></p>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="data/board.js"></script>
+  <script src="data/posters.js"></script>
+  <script src="data/jokes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

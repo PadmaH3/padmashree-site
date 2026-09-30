@@ -1,0 +1,226 @@
+(() => {
+  "use strict";
+
+  const B = window.BOARD, POSTERS = window.POSTERS, J = window.JOKES;
+  const $ = (s, el = document) => el.querySelector(s);
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const mobileQuery = window.matchMedia("(max-width: 820px)");
+  const OWNER_KEY = "padma-owner";
+  const OWNER_PHRASE = "orange"; // type this anywhere to unlock real dragging (a joke lock, not security)
+
+  let isOwner = false;
+  try { isOwner = localStorage.getItem(OWNER_KEY) === "1"; } catch (e) {}
+
+  /* ---------- header + corner links ---------- */
+  $("#board-title").textContent = B.title;
+  $("#board-subtitle").textContent = B.subtitle;
+  for (const [id, key] of [["#link-tools", "tools"], ["#link-twitter", "twitter"]]) {
+    const a = $(id);
+    a.textContent = B.links[key].label;
+    a.href = B.links[key].href;
+  }
+
+  /* ---------- board ---------- */
+  const columns = [...B.columns, B.blog]; // blog is rendered in its own shell but shares drag/drop
+  let dragged = null;
+
+  function renderCard(card, col) {
+    const node = card.link ? el("a", "card") : el("div", "card");
+    if (card.link) { node.href = card.link; node.target = "_blank"; node.rel = "noopener"; }
+    if (card.bare) node.classList.add("bare");
+    node.draggable = !mobileQuery.matches;
+    if (card.badge) node.append(el("span", "card-badge", card.badge));
+    if (card.image) {
+      const img = el("img", "card-img");
+      img.src = card.image; img.alt = card.imageAlt || ""; img.loading = "lazy"; img.draggable = false;
+      node.append(img);
+    }
+    if (card.title) node.append(el("div", "card-title", card.title));
+    if (card.text) node.append(el("p", "card-text", card.text));
+    if (card.checklist) {
+      const ul = el("ul", "checks");
+      for (const item of card.checklist) ul.append(el("li", item.done ? "done" : "", item.text));
+      node.append(ul);
+    }
+    if (card.tag) node.append(el("span", `card-tag tone-${card.tag.tone || "pink"}`, card.tag.label));
+
+    node.addEventListener("dragstart", (e) => {
+      dragged = { card, from: col };
+      node.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", card.title || "card");
+    });
+    node.addEventListener("dragend", () => {
+      node.classList.remove("dragging");
+      document.querySelectorAll(".drop-ok").forEach((c) => c.classList.remove("drop-ok"));
+    });
+    return node;
+  }
+
+  function renderColumn(col) {
+    const wrap = el("div", "column");
+    wrap.dataset.id = col.id;
+    const head = el("button", `col-head tone-${col.tone}`);
+    head.type = "button";
+    head.append(el("span", "", `${col.emoji} ${col.label}`), el("span", "chev", "▾"));
+    head.addEventListener("click", () => {
+      if (!mobileQuery.matches) return;
+      const collapsed = wrap.classList.toggle("collapsed");
+      head.setAttribute("aria-expanded", String(!collapsed));
+    });
+    const body = el("div", "col-body");
+    col.cards.forEach((c) => body.append(renderCard(c, col)));
+    wrap.append(head, body);
+
+    wrap.addEventListener("dragover", (e) => {
+      if (!dragged) return;
+      e.preventDefault();
+      wrap.classList.add("drop-ok");
+    });
+    wrap.addEventListener("dragleave", (e) => {
+      if (!wrap.contains(e.relatedTarget)) wrap.classList.remove("drop-ok");
+    });
+    wrap.addEventListener("drop", (e) => {
+      e.preventDefault();
+      wrap.classList.remove("drop-ok");
+      if (!dragged || dragged.from === col) { dragged = null; return; }
+      const move = dragged; dragged = null;
+      if (!isOwner) { openGate(); return; }
+      move.from.cards.splice(move.from.cards.indexOf(move.card), 1);
+      col.cards.push(move.card);
+      renderBoard();
+      copyBoard();
+    });
+    return wrap;
+  }
+
+  function renderBoard() {
+    const openState = {};
+    document.querySelectorAll(".column").forEach((c) => { openState[c.dataset.id] = c.classList.contains("collapsed"); });
+
+    const host = $("#columns");
+    host.replaceChildren(...B.columns.map(renderColumn));
+    $("#blog").replaceChildren(renderColumn(B.blog));
+
+    document.querySelectorAll(".column").forEach((c) => {
+      const collapsed = c.dataset.id in openState
+        ? openState[c.dataset.id]
+        : mobileQuery.matches && c.dataset.id !== "v1" && c.dataset.id !== "blog";
+      c.classList.toggle("collapsed", collapsed);
+      $(".col-head", c).setAttribute("aria-expanded", String(!collapsed));
+    });
+  }
+
+  mobileQuery.addEventListener("change", () => {
+    document.querySelectorAll(".column").forEach((c) => {
+      const collapsed = mobileQuery.matches && c.dataset.id !== "v1" && c.dataset.id !== "blog";
+      c.classList.toggle("collapsed", collapsed);
+    });
+    document.querySelectorAll(".card").forEach((c) => { c.draggable = !mobileQuery.matches; });
+    buildWall();
+  });
+
+  /* ---------- owner mode ---------- */
+  function toast(msg) {
+    const t = $("#toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.id);
+    toast.id = setTimeout(() => (t.hidden = true), 3200);
+  }
+  function copyBoard() {
+    const out = "window.BOARD = " + JSON.stringify(B, null, 2) + ";\n";
+    (navigator.clipboard ? navigator.clipboard.writeText(out) : Promise.reject())
+      .then(() => toast("Moved. Updated board.js copied to your clipboard: paste it into data/board.js"))
+      .catch(() => { console.log(out); toast("Moved. Couldn't reach the clipboard, so board.js is in the console."); });
+  }
+  let typed = "";
+  addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("input, textarea")) return;
+    typed = (typed + e.key.toLowerCase()).slice(-OWNER_PHRASE.length);
+    if (typed === OWNER_PHRASE) {
+      isOwner = !isOwner;
+      try { localStorage.setItem(OWNER_KEY, isOwner ? "1" : "0"); } catch (err) {}
+      toast(isOwner ? "Welcome back, Padmashree. Dragging unlocked." : "Owner mode off.");
+    }
+  });
+
+  /* ---------- joke gate ---------- */
+  const gate = $("#gate-modal");
+  let lastQ = -1;
+  function openGate() {
+    let i;
+    do { i = Math.floor(Math.random() * J.questions.length); } while (i === lastQ && J.questions.length > 1);
+    lastQ = i;
+    const q = J.questions[i];
+    $("#gate-title").textContent = J.title;
+    $("#gate-intro").textContent = J.intro;
+    $("#gate-q").textContent = q.q;
+    const verdict = $("#gate-verdict");
+    verdict.hidden = true;
+    const opts = $("#gate-options");
+    opts.replaceChildren(...q.a.map((label) => {
+      const b = el("button", "", label);
+      b.type = "button";
+      b.addEventListener("click", () => {
+        opts.querySelectorAll("button").forEach((x) => (x.disabled = true));
+        verdict.textContent = J.rejections[Math.floor(Math.random() * J.rejections.length)];
+        verdict.hidden = false;
+        setTimeout(() => gate.open && gate.close(), 2300);
+      });
+      return b;
+    }));
+    gate.showModal();
+  }
+  gate.addEventListener("click", (e) => { if (e.target === gate) gate.close(); });
+
+  /* ---------- poster wall + lightbox ---------- */
+  const modal = $("#poster-modal");
+  function openPoster(p) {
+    $("#poster-img").src = `assets/posters/full/${p.id}.jpg`;
+    $("#poster-img").alt = p.title;
+    $("#poster-title").textContent = p.title;
+    const credit = $("#poster-artist");
+    credit.replaceChildren();
+    credit.append("Artwork by ");
+    if (p.url) {
+      const a = el("a", "", p.artist); a.href = p.url; a.target = "_blank"; a.rel = "noopener";
+      credit.append(a);
+    } else credit.append(p.artist);
+    modal.showModal();
+  }
+  modal.addEventListener("click", (e) => { if (e.target === modal || e.target.closest("[data-close]")) modal.close(); });
+
+  let wallCols = 0;
+  function buildWall() {
+    const n = mobileQuery.matches ? 3 : 7;
+    if (n === wallCols) return;
+    wallCols = n;
+    const wall = $("#wall");
+    wall.replaceChildren();
+    const per = 6, count = POSTERS.length;
+    for (let c = 0; c < n; c++) {
+      const col = el("div", "wall-col");
+      col.style.marginTop = `${-((c * 53) % 150)}px`;
+      for (let j = 0; j < per; j++) {
+        const p = POSTERS[(c * 2 + j * 3) % count];
+        const btn = el("button", "poster");
+        btn.type = "button";
+        btn.setAttribute("aria-label", `View poster: ${p.title}`);
+        const neon = el("img"); neon.src = `assets/posters/neon/${p.id}.jpg`; neon.alt = ""; neon.draggable = false;
+        const full = el("img", "full"); full.src = `assets/posters/full/${p.id}.jpg`; full.alt = ""; full.loading = "lazy"; full.draggable = false;
+        btn.append(neon, full);
+        btn.addEventListener("click", () => openPoster(p));
+        col.append(btn);
+      }
+      wall.append(col);
+    }
+  }
+
+  renderBoard();
+  buildWall();
+})();
