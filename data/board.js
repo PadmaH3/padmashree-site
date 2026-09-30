@@ -44,18 +44,21 @@ window.BOARD = {
             { text: "Order moving boxes", done: true },
           ],
         },
+        { title: "Daily Gita" },
       ],
     },
     {
       id: "solved", emoji: "🔎", label: "Surely someone has solved this", tone: "blue",
       cards: [
         { title: "Page 3 of google not looking promising" },
+        { title: "Pocket Calendar" },
         { image: "assets/cards/bed-soon.jpg", imageAlt: "Meme: I'll go to bed soon… why am I on Wikipedia reading about advanced nuclear theory?", bare: true },
       ],
     },
     {
       id: "easier", emoji: "🚩", label: "I thought this would be easier", tone: "lilac",
       cards: [
+        { title: "Mudra Name" },
         { image: "assets/cards/not-easy.jpg", imageAlt: "Banner: We do this not because it is easy, but because we thought it would be easy", bare: true },
         { image: "assets/cards/this-is-fine.jpg", imageAlt: "The 'this is fine' dog sitting in a burning room", bare: true },
       ],
