@@ -67,7 +67,7 @@
     wrap.dataset.id = col.id;
     const head = el("button", `col-head tone-${col.tone}`);
     head.type = "button";
-    head.append(el("span", "", `${col.emoji} ${col.label}`), el("span", "chev", "▾"));
+    head.append(el("span", "col-emoji", col.emoji), el("span", "col-label", col.label), el("span", "chev", "▾"));
     head.addEventListener("click", () => {
       if (!mobileQuery.matches) return;
       const collapsed = wrap.classList.toggle("collapsed");
@@ -149,6 +149,15 @@
   });
 
   /* ---------- joke gate ---------- */
+  function showError(msg) {
+    const box = $("#error-pop");
+    box.hidden = true;
+    void box.offsetWidth; // restart the wobble if it's already showing
+    box.textContent = msg;
+    box.hidden = false;
+    clearTimeout(showError.id);
+    showError.id = setTimeout(() => (box.hidden = true), 1300);
+  }
   const gate = $("#gate-modal");
   let lastQ = -1;
   function openGate() {
@@ -159,17 +168,13 @@
     $("#gate-title").textContent = J.title;
     $("#gate-intro").textContent = J.intro;
     $("#gate-q").textContent = q.q;
-    const verdict = $("#gate-verdict");
-    verdict.hidden = true;
     const opts = $("#gate-options");
     opts.replaceChildren(...q.a.map((label) => {
       const b = el("button", "", label);
       b.type = "button";
       b.addEventListener("click", () => {
-        opts.querySelectorAll("button").forEach((x) => (x.disabled = true));
-        verdict.textContent = J.rejections[Math.floor(Math.random() * J.rejections.length)];
-        verdict.hidden = false;
-        setTimeout(() => gate.open && gate.close(), 2300);
+        gate.close();
+        showError(J.rejections[Math.floor(Math.random() * J.rejections.length)]);
       });
       return b;
     }));
