@@ -35,15 +35,6 @@ window.BOARD = {
     {
       id: "thought", emoji: "🧠", label: "Oh. This requires thought.", tone: "pink",
       cards: [
-        {
-          badge: "🍊",
-          title: "Move",
-          text: "Survive moving places in the pandemic.",
-          checklist: [
-            { text: "Request moving estimate" },
-            { text: "Order moving boxes", done: true },
-          ],
-        },
         { title: "Daily Gita" },
       ],
     },
