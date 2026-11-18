@@ -1,0 +1,446 @@
+/* ==========================================================================
+   Landing page
+   Spacing, sizes and radii all sit on an 8px grid (--s-*). Type uses one
+   line height (32px), so every line of text lands on the same rhythm.
+   Motion is slow and eased (--ease); nothing snaps.
+   ========================================================================== */
+
+:root {
+  /* colour */
+  --ink: #23211f;
+  --soft: #75726e;        /* secondary text: 4.7:1 on paper (AA) */
+  --mute: #94908b;        /* resting icons: 3.1:1 on paper (AA non-text) */
+  --paper: #fdfdfc;
+  --line: #4a4744;        /* mini illustrations */
+  --highlight: #ffd23f;
+
+  /* 8px spacing scale */
+  --s-1: 8px;
+  --s-2: 16px;
+  --s-3: 24px;
+  --s-4: 32px;
+  --s-5: 40px;
+  --s-6: 48px;
+  --s-8: 64px;
+  --s-12: 96px;
+  --s-16: 128px;
+  --s-20: 160px;
+
+  /* type */
+  --text: 18px;
+  --leading: 32px;
+
+  /* layout (stepped per breakpoint below) */
+  --icon: 136px;
+  --radius: 32px;          /* ≈ 23.5% of the icon, the app-icon curve */
+  --icon-gap: var(--s-12);
+  --page-top: var(--s-12);
+  --intro-gap: var(--s-12);
+  --deck-gap: var(--s-3);  /* space between an icon and its counterpart */
+
+  /* motion */
+  --ease: cubic-bezier(.25, .8, .25, 1);
+  --slow: 1.6s;
+
+  color-scheme: light;
+}
+
+@media (min-width: 720px) {
+  :root {
+    --page-top: var(--s-16);
+    --intro-gap: var(--s-16);
+  }
+}
+
+@media (min-width: 1200px) {
+  :root {
+    --text: 20px;
+    --icon: 168px;
+    --radius: 40px;        /* 23.8% of 168 */
+    --icon-gap: var(--s-20);
+    --page-top: var(--s-20);
+    --intro-gap: var(--s-20);
+  }
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--text) / var(--leading) "Figtree", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+img { display: block; max-width: 100%; }
+
+.page {
+  min-height: 100vh;
+  padding: var(--page-top) var(--s-3) 0;
+}
+
+/* ---------- words ---------- */
+.intro {
+  max-width: 544px;        /* 68 × 8: about 60 characters, no orphan breaks */
+  margin: 0 auto;
+  text-align: center;
+  text-wrap: balance;
+}
+.intro p { margin: 0; }
+.intro .where { color: var(--soft); }
+.intro .what  { margin-top: var(--s-2); }
+
+.intro p {
+  opacity: 0;
+  transform: translateY(var(--s-1));
+  animation: rise 1.8s var(--ease) forwards;
+}
+.intro .where { animation-delay: .35s; }
+.intro .what  { animation-delay: .7s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* little line drawings that sit inside the sentence */
+.mini {
+  display: inline-block;
+  width: var(--s-6);
+  height: var(--s-3);
+  margin-inline: calc(var(--s-1) - .25em);   /* + the word space = 8px either side */
+  vertical-align: -6px;   /* optical: rests the drawings on the text baseline */
+  color: var(--line);
+  overflow: visible;
+}
+.steam { animation: steam 4s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes steam {
+  0%, 100% { opacity: .25; transform: translateY(1px); }
+  50%      { opacity: .8;  transform: translateY(-1px); }
+}
+
+.what a {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 2px;
+  background-image: linear-gradient(var(--highlight), var(--highlight));
+  background-size: 100% 6px;
+  background-position: 0 88%;
+  background-repeat: no-repeat;
+  transition: background-size .9s var(--ease);
+}
+.what a:hover,
+.what a:focus-visible { background-size: 100% 24px; outline: none; }
+
+/* ---------- apps ---------- */
+.apps {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--icon-gap);
+  margin: var(--intro-gap) auto 0;
+}
+.app { margin: 0; }
+
+.app {
+  opacity: 0;
+  transform: translateY(var(--s-1));
+  animation: rise 2s var(--ease) forwards;
+}
+.app-blue   { animation-delay: 1.1s; }
+.app-yellow { animation-delay: 1.35s; }
+.app-pink   { animation-delay: 1.6s; }
+
+.deck {
+  position: relative;
+  width: var(--icon);
+  height: var(--icon);
+}
+.card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  isolation: isolate;      /* keeps the moving layers clipped to the curve */
+}
+.card img { width: 100%; height: 100%; }
+
+/* A hairline just inside the curve, so white art (the blue window's cloud
+   and sill) still reads as an edge against the white page. */
+.main::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(35, 33, 31, .08);
+  pointer-events: none;
+}
+.under {
+  outline: 1px solid rgba(35, 33, 31, .08);
+  outline-offset: -1px;
+}
+
+.main {
+  z-index: 2;
+  box-shadow:
+    0 1px 2px rgba(35, 33, 31, .06),
+    0 8px 32px -16px rgba(35, 33, 31, .2);
+  transition: box-shadow var(--slow) var(--ease), outline-color .6s var(--ease);
+  outline: 2px solid transparent;
+  outline-offset: var(--s-1);
+}
+.main:hover,
+.main:focus-visible {
+  box-shadow:
+    0 1px 2px rgba(35, 33, 31, .06),
+    0 16px 40px -16px rgba(35, 33, 31, .24);
+}
+.main:focus-visible { outline-color: var(--soft); }
+
+.under {
+  z-index: 1;
+  object-fit: cover;
+  /* scroll-driven: --p goes 0 → 1 (set in landing.js) */
+  transform:
+    translateY(calc(var(--p, 0) * (100% + var(--deck-gap))))
+    scale(calc(.94 + var(--p, 0) * .06));
+  opacity: var(--p, 0);
+  box-shadow:
+    0 1px 2px rgba(35, 33, 31, .05),
+    0 8px 24px -16px rgba(35, 33, 31, .16);
+  will-change: transform, opacity;
+}
+
+/* ---------- moving parts ----------
+   Each main icon is a clean background plate plus cut-out layers on the
+   same 512px canvas (tools/build_icon_layers.py), so every layer sits at
+   inset 0 and the stack is identical to the original art at rest. */
+.part {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* blue: the cloud drifts on, out of the window */
+.cloud { transition: transform 3.2s var(--ease); }
+.main:hover .cloud,
+.main:focus-visible .cloud { transform: translateX(8%); }
+
+/* blue: one slow blink, now and then */
+.lid {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  width: 4.4%;
+  height: 4.4%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+/* closed eye: a soft downward curve, stroked at the art's line weight */
+.lid::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 20%;
+  height: 40%;
+  border-bottom: calc(var(--icon) * .012) solid var(--ink);
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+}
+.main:hover .lid,
+.main:focus-visible .lid { animation: blink 3.6s 1s ease-in-out infinite; }
+@keyframes blink {
+  0%, 44%, 52%, 100% { opacity: 0; }
+  46%, 50%           { opacity: 1; }
+}
+
+/* yellow: the idea bulb swells from its base and glows */
+.glow {
+  position: absolute;
+  left: 81.4%;
+  top: 18.8%;
+  width: 36%;
+  height: 36%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 255, 240, .95) 0%,
+    rgba(255, 246, 200, .55) 35%,
+    rgba(255, 230, 120, 0) 70%);
+  opacity: 0;
+  transition: opacity 2.4s var(--ease);
+  pointer-events: none;
+}
+.main:hover .glow,
+.main:focus-visible .glow { opacity: 1; }
+.bulb {
+  transform-origin: 81.5% 35.9%;   /* the bottom of the screw */
+  transition: transform 2.4s var(--ease);
+}
+.main:hover .bulb,
+.main:focus-visible .bulb { transform: scale(1.05); }
+
+/* pink: the butterfly flutters, keeping clear of the corner */
+.fly { transform-origin: 15.6% 11.1%; }
+.main:hover .fly,
+.main:focus-visible .fly { animation: flutter 2.8s ease-in-out infinite; }
+@keyframes flutter {
+  0%   { transform: translate(0, 0)        rotate(0)     scaleX(1); }
+  16%  { transform: translate(1.6%, 1.2%)  rotate(-6deg) scaleX(.82); }
+  32%  { transform: translate(3.2%, .4%)   rotate(4deg)  scaleX(1); }
+  48%  { transform: translate(4.8%, 2.4%)  rotate(-3deg) scaleX(.8); }
+  64%  { transform: translate(3.2%, 4%)    rotate(5deg)  scaleX(1); }
+  82%  { transform: translate(1.2%, 2.4%)  rotate(-2deg) scaleX(.86); }
+  100% { transform: translate(0, 0)        rotate(0)     scaleX(1); }
+}
+
+/* room to scroll, so the decks can open */
+.tail { height: 70vh; }
+
+/* ---------- elsewhere ---------- */
+.social {
+  position: fixed;
+  right: var(--s-3);
+  bottom: var(--s-3);
+  display: flex;
+}
+.social a {
+  display: grid;
+  place-items: center;
+  width: var(--s-5);       /* 40px hit area around a 16px glyph */
+  height: var(--s-5);
+  border-radius: var(--s-1);
+  color: var(--mute);
+  outline: 2px solid transparent;
+  transition: color .8s var(--ease), outline-color .6s var(--ease);
+}
+.social a:hover,
+.social a:focus-visible { color: var(--ink); }
+.social a:focus-visible { outline-color: var(--soft); }
+.social svg {
+  width: var(--s-2);
+  height: var(--s-2);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.social .dot,
+.social .fill { fill: currentColor; stroke: none; }
+
+/* ==========================================================================
+   Games page (little-one/)
+   Thumbnails are 16:10, sized so both sides land on the grid:
+   320 × 200 on tablets, 384 × 240 on desktops.
+   ========================================================================== */
+.home-link {
+  position: fixed;
+  top: var(--s-3);
+  left: var(--s-3);
+  padding: 0 var(--s-1);
+  border-radius: var(--s-1);
+  color: var(--soft);
+  text-decoration: none;
+  outline: 2px solid transparent;
+  transition: color .8s var(--ease), outline-color .6s var(--ease);
+  z-index: 10;
+}
+.home-link:hover,
+.home-link:focus-visible { color: var(--ink); }
+.home-link:focus-visible { outline-color: var(--soft); }
+
+.games {
+  --thumb: 320px;
+  display: grid;
+  grid-template-columns: repeat(2, var(--thumb));
+  justify-content: center;
+  gap: var(--s-8) var(--s-4);
+  margin: var(--intro-gap) auto 0;
+  padding-bottom: var(--s-16);
+}
+@media (min-width: 1200px) { .games { --thumb: 384px; } }
+
+.game {
+  margin: 0;
+  opacity: 0;
+  transform: translateY(var(--s-1));
+  animation: rise 2s var(--ease) forwards;
+}
+.game:nth-child(1) { animation-delay: .7s; }
+.game:nth-child(2) { animation-delay: .85s; }
+.game:nth-child(3) { animation-delay: 1s; }
+.game:nth-child(4) { animation-delay: 1.15s; }
+
+.game-link {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  outline: none;
+}
+.thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--s-2);
+  outline: 1px solid rgba(35, 33, 31, .08);
+  outline-offset: -1px;
+  box-shadow:
+    0 1px 2px rgba(35, 33, 31, .06),
+    0 8px 32px -16px rgba(35, 33, 31, .2);
+  transition: box-shadow var(--slow) var(--ease), outline-color .6s var(--ease);
+}
+.game-link:hover .thumb,
+.game-link:focus-visible .thumb {
+  box-shadow:
+    0 1px 2px rgba(35, 33, 31, .06),
+    0 16px 40px -16px rgba(35, 33, 31, .24);
+}
+.game-link:focus-visible .thumb { outline: 2px solid var(--soft); outline-offset: var(--s-1); }
+
+.game-title { display: block; margin-top: var(--s-2); }
+.game-meta,
+.game-play { margin: 0; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-play { color: var(--mute); }
+.game-play a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(148, 144, 139, .5);
+  transition: color .8s var(--ease), text-decoration-color .8s var(--ease);
+}
+.game-play a:hover,
+.game-play a:focus-visible { color: var(--ink); text-decoration-color: currentColor; }
+
+@media (max-width: 719px) {
+  .home-link { position: static; display: inline-block; margin: var(--s-2) 0 0 var(--s-2); }
+  .page:has(.games) { padding-top: var(--s-8); }
+  .games { grid-template-columns: minmax(0, 1fr); max-width: 480px; gap: var(--s-6); }
+}
+
+/* ---------- small screens: one column ---------- */
+@media (max-width: 719px) {
+  .apps {
+    flex-direction: column;
+    align-items: center;
+    /* each deck opens downward: icon + deck gap + counterpart, then a breath */
+    gap: calc(var(--icon) + var(--deck-gap) + var(--s-8));
+  }
+  .tail { height: var(--s-12); }
+  .social {
+    position: static;
+    justify-content: center;
+    padding: var(--s-8) 0 var(--s-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .intro p, .app, .game { opacity: 1; transform: none; }
+}

@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Letter Stickers</title>
+<style>
+  :root {
+    --board: #2f5d46;
+    --board-dark: #234836;
+    --wood: #9a6232;
+    --wood-dark: #6e4220;
+    --chalk: #f4f1e8;
+    --soft: rgba(244,241,232,.6);
+    --glow: #ffe066;
+    --frame: 22px;
+    --tray: 46px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--wood-dark); color: var(--chalk);
+    font-family: "Chalkboard SE", "Chalkboard", "Comic Sans MS", "Arial Rounded MT Bold", system-ui, sans-serif;
+    user-select: none; -webkit-user-select: none;
+    cursor: default;
+  }
+
+  /* The chalkboard: green slate with chalk smudges, inside a wooden frame */
+  #chalkboard {
+    position: fixed; inset: 0; z-index: 0;
+    border: var(--frame) solid var(--wood);
+    border-bottom-width: calc(var(--frame) + var(--tray));
+    border-image: linear-gradient(135deg, #b47a45, var(--wood) 40%, var(--wood-dark)) 1;
+    background:
+      radial-gradient(ellipse 30% 18% at 22% 28%, rgba(255,255,255,.07), transparent 70%),
+      radial-gradient(ellipse 25% 14% at 78% 65%, rgba(255,255,255,.06), transparent 70%),
+      radial-gradient(ellipse 40% 10% at 55% 15%, rgba(255,255,255,.04), transparent 70%),
+      radial-gradient(ellipse 20% 25% at 85% 20%, rgba(255,255,255,.05), transparent 70%),
+      radial-gradient(ellipse at center, var(--board) 0%, var(--board-dark) 100%);
+    box-shadow: inset 0 0 40px rgba(0,0,0,.45);
+  }
+  /* Chalk tray with a few chalk sticks and an eraser */
+  #tray {
+    position: fixed; left: var(--frame); right: var(--frame);
+    bottom: calc(var(--frame) * .5); height: var(--tray);
+    background: linear-gradient(#c58a52, var(--wood-dark));
+    border-radius: 4px; box-shadow: 0 -4px 8px rgba(0,0,0,.35);
+    z-index: 1; pointer-events: none;
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    color: rgba(255,240,220,.85); font-size: 14px;
+  }
+  .stick { width: 46px; height: 10px; border-radius: 3px; flex: none; }
+  .eraser {
+    width: 70px; height: 22px; border-radius: 4px; flex: none;
+    background: linear-gradient(#e9d9b8 0 55%, #3a3a3a 55%);
+  }
+  #tray .spacer { flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  #board { position: fixed; inset: 0; z-index: 2; }
+
+  /* Big letter in the middle, written in chalk */
+  #letter {
+    position: fixed; left: 50%; top: 40%;
+    transform: translate(-50%, -50%);
+    font-size: min(40vh, 40vw); line-height: 1;
+    font-weight: 700; pointer-events: none; white-space: nowrap;
+    text-shadow: 0 0 2px currentColor, 0 0 8px rgba(255,255,255,.25);
+    opacity: .95; z-index: 1;
+  }
+  #letter .lower { font-size: .55em; opacity: .7; margin-left: .08em; }
+  #word {
+    position: fixed; left: 0; right: 0; top: 72%;
+    text-align: center; font-size: min(7.5vh, 7.5vw); font-weight: 700;
+    color: var(--chalk);
+    text-shadow: 0 0 2px rgba(255,255,255,.6);
+    pointer-events: none; z-index: 1;
+  }
+  #word b { color: var(--accent, #ffadad); }
+  .pop { animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop {
+    0% { transform: translate(-50%, -50%) scale(.3); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: .95; }
+  }
+
+  /* Stickers */
+  .sticker {
+    position: absolute; font-size: min(16vh, 16vw); line-height: 1;
+    transform: translate(-50%, -50%);
+    transition: left .12s ease-out, top .12s ease-out;
+    z-index: 2; cursor: grab;
+    filter: drop-shadow(0 6px 4px rgba(0,0,0,.35));
+    animation: drop .5s cubic-bezier(.2,1.6,.4,1);
+  }
+  .sticker.active {
+    filter: drop-shadow(0 0 14px var(--glow)) drop-shadow(0 0 6px var(--glow));
+    z-index: 3;
+  }
+  .sticker.dragging { transition: none; cursor: grabbing; }
+  @keyframes drop {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-30deg); }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0); }
+  }
+  .poof { animation: poof .35s ease-in forwards; }
+  @keyframes poof {
+    to { transform: translate(-50%, -50%) scale(0) rotate(90deg); opacity: 0; }
+  }
+
+  /* Start screen sits on the chalkboard too */
+  #start {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 24px; text-align: center; padding: 16px 48px 80px;
+  }
+  #start button {
+    font: inherit; font-size: min(7vh, 9vw); font-weight: 700;
+    padding: .35em 1.2em; border: 0; border-radius: 999px;
+    background: #ffd166; color: #3d2b12; cursor: pointer;
+    box-shadow: 0 8px 0 #c98b1a;
+  }
+  #start button:active { transform: translateY(4px); box-shadow: 0 4px 0 #c98b1a; }
+  #start p { color: var(--soft); font-size: 18px; max-width: 34em; margin: 0; line-height: 1.5; }
+  #start p b { color: var(--chalk); }
+  #start h1 { margin: 0; font-size: min(9vh, 10vw); text-shadow: 0 0 2px rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+<div id="board"></div>
+<div id="letter"></div>
+<div id="word"></div>
+<div id="chalkboard"></div>
+<div id="tray">
+  <span class="stick" style="background:#fff"></span>
+  <span class="stick" style="background:#ffadad"></span>
+  <span class="stick" style="background:#9bf6ff"></span>
+  <span class="spacer">Letters &amp; numbers to play · Arrow keys move the sticker · Delete wipes the board</span>
+  <span class="stick" style="background:#fdffb6"></span>
+  <span class="eraser"></span>
+</div>
+
+<div id="start">
+  <h1>🔤 Letter Stickers 🎉</h1>
+  <button id="go">▶ Play!</button>
+  <p>Press a letter to hear it and get a sticker. The arrow keys move the newest sticker
+     (click a sticker to choose a different one, or drag it). Press <b>Delete</b> to clear them all.
+     The game goes full screen; a grown-up can press <b>Esc</b> to leave.</p>
+</div>
+
+<script>
+// Each letter has a few words; one is picked at random each press for variety.
+const WORDS = {
+  A: [["Apple","🍎"],["Ant","🐜"],["Airplane","✈️"],["Alligator","🐊"]],
+  B: [["Ball","⚽"],["Banana","🍌"],["Bus","🚌"],["Bear","🐻"],["Bee","🐝"]],
+  C: [["Cat","🐱"],["Car","🚗"],["Cake","🎂"],["Cow","🐮"]],
+  D: [["Dog","🐶"],["Duck","🦆"],["Dinosaur","🦕"],["Drum","🥁"]],
+  E: [["Elephant","🐘"],["Egg","🥚"],["Eagle","🦅"]],
+  F: [["Fish","🐟"],["Frog","🐸"],["Fire truck","🚒"],["Flower","🌸"]],
+  G: [["Grapes","🍇"],["Giraffe","🦒"],["Goat","🐐"]],
+  H: [["House","🏠"],["Horse","🐴"],["Helicopter","🚁"],["Hat","🎩"]],
+  I: [["Ice cream","🍦"],["Igloo","🛖"],["Insect","🐞"]],
+  J: [["Juice","🧃"],["Jellyfish","🪼"],["Jeep","🚙"]],
+  K: [["Kite","🪁"],["Kangaroo","🦘"],["Key","🔑"],["Koala","🐨"]],
+  L: [["Lion","🦁"],["Lemon","🍋"],["Leaf","🍃"]],
+  M: [["Monkey","🐵"],["Moon","🌙"],["Mouse","🐭"],["Monster truck","🛻"]],
+  N: [["Nest","🪺"],["Nose","👃"],["Night","🌃"]],
+  O: [["Orange","🍊"],["Owl","🦉"],["Octopus","🐙"]],
+  P: [["Pig","🐷"],["Penguin","🐧"],["Pizza","🍕"],["Panda","🐼"]],
+  Q: [["Queen","👸"],["Quilt","🛏️"]],
+  R: [["Rainbow","🌈"],["Rabbit","🐰"],["Rocket","🚀"]],
+  S: [["Sun","☀️"],["Star","⭐"],["Snake","🐍"],["Strawberry","🍓"]],
+  T: [["Truck","🚚"],["Tiger","🐯"],["Train","🚂"],["Tractor","🚜"],["Turtle","🐢"]],
+  U: [["Umbrella","☂️"],["Unicorn","🦄"]],
+  V: [["Van","🚐"],["Violin","🎻"],["Volcano","🌋"]],
+  W: [["Whale","🐳"],["Watermelon","🍉"],["Wheel","🛞"]],
+  X: [["X-ray","🩻"],["Xylophone","🎶"]],
+  Y: [["Yo-yo","🪀"],["Yak","🐃"]],
+  Z: [["Zebra","🦓"],["Zoo","🦁"]],
+};
+const NUMBER_WORDS = ["zero","one","two","three","four","five","six","seven","eight","nine"];
+// Pastel chalk colours
+const COLORS = ["#ffadad","#ffd6a5","#fdffb6","#caffbf","#9bf6ff","#a0c4ff","#bdb2ff","#ffc6ff"];
+
+const board = document.getElementById("board");
+const letterEl = document.getElementById("letter");
+const wordEl = document.getElementById("word");
+let active = null;
+let colorIdx = 0;
+let lastKeyAt = 0;
+
+// ---- Speech ----
+let voice = null;
+function pickVoice() {
+  const voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("en"));
+  // Premium/Enhanced Mac voices sound far more natural than the default ones, so use one if installed.
+  const preferred = ["Ava (Premium)","Zoe (Premium)","Samantha (Enhanced)","Ava (Enhanced)","Zoe (Enhanced)",
+                     "Karen (Enhanced)","Serena (Premium)","Samantha","Karen","Moira","Google US English"];
+  voice = preferred.map(n => voices.find(v => v.name.includes(n))).find(Boolean) || voices[0] || null;
+}
+pickVoice();
+speechSynthesis.onvoiceschanged = pickVoice;
+
+const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+const pick = list => list[Math.floor(Math.random() * list.length)];
+let speakTimer = null;
+
+function say(text, delay = 0) {
+  speechSynthesis.cancel(); // new press interrupts the old one, so mashing doesn't queue up
+  clearTimeout(speakTimer);
+  speakTimer = setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    // A little variety in tone and speed on every press keeps it from sounding robotic.
+    u.rate = rand(0.8, 0.95);
+    u.pitch = rand(1.1, 1.45);
+    speechSynthesis.speak(u);
+  }, delay);
+}
+
+// A short, soft chime (two notes) before each word, made with the Web Audio API.
+let audio = null;
+function chime() {
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  const scale = [523.25, 587.33, 659.25, 783.99, 880, 1046.5]; // C major pentatonic
+  const first = Math.floor(Math.random() * 4);
+  [scale[first], scale[first + 2]].forEach((freq, i) => {
+    const t = audio.currentTime + i * 0.1;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(t); osc.stop(t + 0.4);
+  });
+}
+
+// Different cheerful ways to say it. Each one names the letter only once.
+const LETTER_LINES = [
+  (L, w) => `${L} is for ${w}!`,
+  (L, w) => `${L} is for ${w}!`,
+  (L, w) => `Wow! ${L} is for ${w}!`,
+  (L, w) => `Yay! ${L} is for ${w}!`,
+  (L, w) => `Ooh, ${L} is for ${w}!`,
+  (L, w) => `${L} is for ${w}! Hooray!`,
+];
+
+// ---- Display ----
+function show(big, small, line, accent) {
+  letterEl.innerHTML = small ? `${big}<span class="lower">${small}</span>` : big;
+  letterEl.style.color = accent;
+  wordEl.style.setProperty("--accent", accent);
+  wordEl.innerHTML = line;
+  letterEl.classList.remove("pop"); void letterEl.offsetWidth; letterEl.classList.add("pop");
+}
+
+// ---- Stickers ----
+function setActive(el) {
+  if (active) active.classList.remove("active");
+  active = el;
+  if (el) el.classList.add("active");
+}
+
+// The area inside the wooden frame and above the chalk tray.
+function playArea() {
+  const frame = 22, tray = 46;
+  return { left: frame, top: frame, right: innerWidth - frame, bottom: innerHeight - frame - tray };
+}
+const stickerRadius = () => Math.min(innerWidth, innerHeight) * 0.16 * 0.55;
+
+// Boxes around the big letter and the "A is for Apple" line, which stickers should not land on.
+// They are sized for the widest letter and longest line, so the space stays clear whatever is pressed next.
+let zoneCache = { key: "", zones: [] };
+// Measure again once the chalk font has loaded, since it changes the text size.
+document.fonts?.ready.then(() => { zoneCache.key = ""; });
+function textZones() {
+  const key = innerWidth + "x" + innerHeight;
+  if (zoneCache.key === key) return zoneCache.zones;
+  const pad = 10;
+  // Lay out a hidden copy with sample text and read its size.
+  const measure = (src, html) => {
+    const m = src.cloneNode();
+    m.innerHTML = html;
+    m.classList.remove("pop");
+    m.style.visibility = "hidden";
+    document.body.appendChild(m);
+    const box = { w: m.offsetWidth, h: m.offsetHeight, top: m.offsetTop, textW: m.firstElementChild.offsetWidth };
+    m.remove();
+    return box;
+  };
+  const cx = innerWidth / 2, cy = innerHeight * 0.40;
+  const L = measure(letterEl, 'W<span class="lower">w</span>');
+  const letterZone = { left: cx - L.w / 2 - pad, right: cx + L.w / 2 + pad, top: cy - L.h / 2 - pad, bottom: cy + L.h / 2 + pad };
+  // The word line spans the full width, so measure the text inside it.
+  const W = measure(wordEl, '<span><b>W</b> is for Monster truck 🛻</span>');
+  const wordZone = { left: cx - W.textW / 2 - pad, right: cx + W.textW / 2 + pad, top: W.top - pad, bottom: W.top + W.h + pad };
+  zoneCache = { key, zones: [letterZone, wordZone] };
+  return zoneCache.zones;
+}
+
+// Does a circle at (x, y) touch a box?
+function hitsZone(x, y, rad, z) {
+  const nx = Math.max(z.left, Math.min(x, z.right));
+  const ny = Math.max(z.top, Math.min(y, z.bottom));
+  return (x - nx) ** 2 + (y - ny) ** 2 < rad * rad;
+}
+
+// Try lots of random spots and keep the one furthest from other stickers, staying off the letter and word.
+// Once the board is full, stickers start to overlap, but as little as possible.
+function findSpot() {
+  const area = playArea(), rad = stickerRadius();
+  const zones = textZones();
+  const others = [...board.querySelectorAll(".sticker:not(.poof)")].map(s => [s.offsetLeft, s.offsetTop]);
+  let best = null, bestScore = -Infinity;
+  for (let i = 0; i < 400; i++) {
+    const x = area.left + rad + Math.random() * Math.max(0, area.right - area.left - 2 * rad);
+    const y = area.top + rad + Math.random() * Math.max(0, area.bottom - area.top - 2 * rad);
+    const onText = zones.some(z => hitsZone(x, y, rad, z));
+    const gap = Math.min(innerWidth, ...others.map(([ox, oy]) => Math.hypot(x - ox, y - oy)));
+    if (!onText && gap >= 2 * rad * 1.05) return [x, y]; // a clear spot: take it right away
+    // Otherwise remember the best compromise: off the text first, then as far from others as possible.
+    const score = (onText ? 0 : 1e6) + gap;
+    if (score > bestScore) { bestScore = score; best = [x, y]; }
+  }
+  return best;
+}
+
+function addSticker(emoji) {
+  const el = document.createElement("div");
+  el.className = "sticker";
+  el.textContent = emoji;
+  const [x, y] = findSpot();
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  board.appendChild(el);
+  setActive(el);
+  makeDraggable(el);
+}
+
+function moveActive(dx, dy) {
+  if (!active) return;
+  const step = Math.max(30, Math.min(innerWidth, innerHeight) * 0.06);
+  const area = playArea(), rad = stickerRadius() * 0.6;
+  const x = Math.min(area.right - rad, Math.max(area.left + rad, active.offsetLeft + dx * step));
+  const y = Math.min(area.bottom - rad, Math.max(area.top + rad, active.offsetTop + dy * step));
+  active.style.left = x + "px";
+  active.style.top = y + "px";
+}
+
+function clearStickers() {
+  const all = board.querySelectorAll(".sticker");
+  if (!all.length) return;
+  all.forEach(s => { s.classList.add("poof"); setTimeout(() => s.remove(), 350); });
+  active = null;
+  letterEl.innerHTML = ""; wordEl.innerHTML = "";
+  say(pick(["All clean!", "Squeaky clean!", "Bye bye stickers!", "All gone!"]));
+}
+
+function makeDraggable(el) {
+  el.addEventListener("pointerdown", e => {
+    setActive(el);
+    el.classList.add("dragging");
+    el.setPointerCapture(e.pointerId);
+    const move = ev => { el.style.left = ev.clientX + "px"; el.style.top = ev.clientY + "px"; };
+    const up = () => {
+      el.classList.remove("dragging");
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+  });
+}
+
+// ---- Keyboard ----
+document.addEventListener("keydown", e => {
+  if (document.getElementById("start").style.display !== "none") return;
+  // Stop the browser from reacting to stray presses (scrolling, back navigation, etc.).
+  // Esc is left alone so a grown-up can always leave full screen.
+  if (e.key !== "Escape") e.preventDefault();
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  const k = e.key;
+  if (k === "ArrowLeft")  return moveActive(-1, 0);
+  if (k === "ArrowRight") return moveActive(1, 0);
+  if (k === "ArrowUp")    return moveActive(0, -1);
+  if (k === "ArrowDown")  return moveActive(0, 1);
+  if (k === "Backspace" || k === "Delete") return clearStickers();
+
+  // Holding a key down repeats fast; ignore repeats and super-fast mashing.
+  if (e.repeat) return;
+  const now = Date.now();
+  if (now - lastKeyAt < 250) return;
+  lastKeyAt = now;
+
+  const accent = COLORS[colorIdx++ % COLORS.length];
+  const up = k.toUpperCase();
+  if (up.length === 1 && WORDS[up]) {
+    const [word, emoji] = WORDS[up][Math.floor(Math.random() * WORDS[up].length)];
+    show(up, up.toLowerCase(), `<b>${up}</b> is for ${word} ${emoji}`, accent);
+    chime();
+    say(pick(LETTER_LINES)(up, word), 250);
+    addSticker(emoji);
+  } else if (/^[0-9]$/.test(k)) {
+    const n = Number(k);
+    show(k, "", n ? "⭐".repeat(n) : "Zero!", accent);
+    chime();
+    say(pick(["", "", "Yay, ", "Wow, "]) + NUMBER_WORDS[n] + "!", 250);
+  }
+});
+
+// ---- Start (a click is needed before the browser allows sound) ----
+document.getElementById("go").addEventListener("click", () => {
+  document.getElementById("start").style.display = "none";
+  document.documentElement.requestFullscreen?.().catch(() => {});
+  say("Let's play! Press a letter!");
+});
+</script>
+</body>
+</html>
